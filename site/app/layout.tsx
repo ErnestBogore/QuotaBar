@@ -14,16 +14,16 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://quotabar.fyi"),
-  title: "QuotaBar — Make your Codex week last",
+  title: "QuotaBar — Bring back Codex’s five-hour limit",
   description:
-    "A private macOS menu-bar guardrail that helps you spread Codex usage across the week.",
+    "QuotaBar tracks Codex usage and pauses new Mac app prompts when your five-hour budget runs out.",
   icons: {
     icon: "/icon.png",
     shortcut: "/icon.png",
   },
   openGraph: {
-    title: "QuotaBar — Use Codex steadily. Not all at once.",
-    description: "A private macOS menu-bar guardrail that helps you spread Codex usage across the week.",
+    title: "QuotaBar brings back Codex’s five-hour limit.",
+    description: "Track your Codex usage and keep one long session from burning through your weekly allowance.",
     url: "https://quotabar.fyi",
     siteName: "QuotaBar",
     images: [{ url: "/og.png", width: 1200, height: 630, alt: "QuotaBar for macOS" }],
@@ -31,8 +31,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "QuotaBar — Use Codex steadily. Not all at once.",
-    description: "A private macOS menu-bar guardrail that helps you spread Codex usage across the week.",
+    title: "QuotaBar brings back Codex’s five-hour limit.",
+    description: "Track your Codex usage and keep one long session from burning through your weekly allowance.",
     images: ["/og.png"],
   },
 };

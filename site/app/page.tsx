@@ -32,8 +32,7 @@ export default function Home() {
               Download for Mac
             </a>
           </div>
-          <p className="compatibility">macOS 14+ · Apple silicon · Free and open source</p>
-          <p className="install-hint">Open the download, then drag QuotaBar to Applications.</p>
+          <p className="compatibility">macOS 14+ · Free and open source</p>
         </div>
 
         <div className="product-stage" aria-label="QuotaBar app preview">

@@ -2875,7 +2875,7 @@ dependencies = [
 
 [[package]]
 name = "quota-core"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "chrono",
  "serde",
@@ -2885,7 +2885,7 @@ dependencies = [
 
 [[package]]
 name = "quotabar"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "chrono",
  "dirs 6.0.0",
@@ -2906,7 +2906,7 @@ dependencies = [
 
 [[package]]
 name = "quotabar-hook"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "dirs 6.0.0",
  "serde",

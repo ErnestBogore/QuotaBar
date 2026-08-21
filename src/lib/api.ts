@@ -14,6 +14,8 @@ const mock: GateSnapshotV1 = {
   allowanceWeeklyPoints: 16,
   launchAtLogin: true,
   notificationsEnabled: true,
+  notificationSoundEnabled: true,
+  onboardingCompleted: true,
   availableBuckets: [],
   confidence: 'coarse',
   sourceLabel: 'Official weekly meter',
@@ -40,6 +42,22 @@ export async function getState(): Promise<GateSnapshotV1> {
 
 export async function updateSettings(settings: Settings): Promise<GateSnapshotV1> {
   return invoke<GateSnapshotV1>('update_settings', { settings });
+}
+
+export async function completeOnboarding(): Promise<GateSnapshotV1> {
+  return invoke<GateSnapshotV1>('complete_onboarding');
+}
+
+export async function sendTestNotification(): Promise<void> {
+  await invoke('send_test_notification');
+}
+
+export async function openApplicationsFolder(): Promise<void> {
+  await invoke('open_applications_folder');
+}
+
+export async function isInApplications(): Promise<boolean> {
+  return invoke<boolean>('is_in_applications');
 }
 
 export async function requestOverride(phrase: string): Promise<OverrideResponse> {

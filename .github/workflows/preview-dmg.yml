@@ -1,0 +1,33 @@
+name: Build Preview DMG
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dmg:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - run: pnpm install --frozen-lockfile
+      - run: ./scripts/prepare-hook.sh release
+      - run: pnpm check && pnpm test && cargo test --workspace
+      - run: pnpm tauri build --bundles dmg
+      - name: Give the installer a stable name
+        run: mv target/release/bundle/dmg/QuotaBar_*.dmg target/release/bundle/dmg/QuotaBar.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QuotaBar-dmg
+          path: target/release/bundle/dmg/QuotaBar.dmg
+          compression-level: 0
+          if-no-files-found: error

@@ -22,11 +22,15 @@ export default function Home() {
             the Codex Mac app when your five-hour budget runs out.
           </p>
           <div className="hero-actions">
-            <a className="button primary" href="https://github.com/ErnestBogore/QuotaBar/releases/latest">
+            <a
+              className="button primary"
+              href="https://github.com/ErnestBogore/QuotaBar/releases/latest/download/QuotaBar.dmg"
+            >
               Download for Mac
             </a>
           </div>
           <p className="compatibility">macOS 14+ · Apple silicon · Free and open source</p>
+          <p className="install-hint">Open the download, then drag QuotaBar to Applications.</p>
         </div>
 
         <div className="product-stage" aria-label="QuotaBar app preview">

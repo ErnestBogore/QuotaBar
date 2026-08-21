@@ -27,6 +27,8 @@ export interface GateSnapshotV1 {
   allowanceWeeklyPoints: number;
   launchAtLogin: boolean;
   notificationsEnabled: boolean;
+  notificationSoundEnabled: boolean;
+  onboardingCompleted: boolean;
   availableBuckets: RateLimitSnapshot[];
   confidence: MeterConfidence;
   sourceLabel: string;
@@ -47,6 +49,8 @@ export interface Settings {
   allowanceWeeklyPoints: number;
   launchAtLogin: boolean;
   notificationsEnabled: boolean;
+  notificationSoundEnabled: boolean;
+  onboardingCompleted: boolean;
 }
 
 export interface OverrideResponse {

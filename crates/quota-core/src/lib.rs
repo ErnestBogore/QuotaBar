@@ -14,11 +14,14 @@ fn legacy_meter_state_version() -> u8 {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(default)]
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
     pub allowance_weekly_points: f64,
     pub launch_at_login: bool,
     pub notifications_enabled: bool,
+    pub notification_sound_enabled: bool,
+    pub onboarding_completed: bool,
 }
 
 impl Default for Settings {
@@ -27,6 +30,8 @@ impl Default for Settings {
             allowance_weekly_points: CLASSIC_ALLOWANCE_WEEKLY_POINTS,
             launch_at_login: true,
             notifications_enabled: true,
+            notification_sound_enabled: true,
+            onboarding_completed: false,
         }
     }
 }
@@ -279,6 +284,8 @@ pub struct GateSnapshotV1 {
     pub allowance_weekly_points: f64,
     pub launch_at_login: bool,
     pub notifications_enabled: bool,
+    pub notification_sound_enabled: bool,
+    pub onboarding_completed: bool,
     pub available_buckets: Vec<RateLimitSnapshot>,
     pub confidence: MeterConfidence,
     pub source_label: String,
@@ -623,6 +630,8 @@ impl MeterEngine {
             allowance_weekly_points: self.settings.allowance_weekly_points,
             launch_at_login: self.settings.launch_at_login,
             notifications_enabled: self.settings.notifications_enabled,
+            notification_sound_enabled: self.settings.notification_sound_enabled,
+            onboarding_completed: self.settings.onboarding_completed,
             available_buckets: self.available_buckets.clone(),
             confidence,
             source_label,

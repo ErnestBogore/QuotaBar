@@ -8,22 +8,22 @@ QuotaBar is an independent community project. It is not affiliated with or endor
 
 ## Install the preview (no developer tools needed)
 
-1. Download the latest `QuotaBar-…-macos-arm64.zip` file and double-click it.
-2. Drag **QuotaBar** into the **Applications** folder. Choose **Replace** if an older preview is already installed.
+1. Download [QuotaBar for Mac](https://github.com/ErnestBogore/QuotaBar/releases/latest/download/QuotaBar.dmg) and open the downloaded disk image.
+2. Drag **QuotaBar** onto the **Applications** folder shown in the installer. Choose **Replace** if an older preview is already installed.
 3. Open Applications, Control-click **QuotaBar**, and choose **Open**. This extra step is required for the current community-signed preview.
-4. Click the new **Q** icon in the menu bar. QuotaBar starts measuring automatically.
-5. Open the gear button only if you want to turn on or fix **Pause new prompts at 0%**.
+4. Follow QuotaBar's three-step welcome screen to test alerts and turn on **Pause new prompts at 0%**.
+5. Click the new **Q** icon in the menu bar whenever you want to check your remaining budget.
 
 The large number is the five-hour budget remaining. The smaller bar is the official weekly budget. Every Codex client contributes to both meters, but the optional gate pauses only new prompts from the Codex Mac app. QuotaBar deliberately allows CLI, IDE, browser, cloud, and unknown clients.
 
-QuotaBar behaves like a menu-bar popover: click another app, press Escape, or use the × button to hide it. It continues measuring in the menu bar. After installing a release that supports updates, use **Settings → Updates → Check** to download and install future signed releases without replacing the app manually.
+QuotaBar behaves like a menu-bar popover: click another app, press Escape, or use the × button to hide it. It continues measuring in the menu bar and opens automatically after you restart your Mac. QuotaBar checks for updates in the background; use the small bell to read what's new or install an available update without downloading another ZIP.
 
 ## What it does
 
 - Reads official account rate-limit snapshots through `codex app-server`.
 - Interpolates rounded server percentages from local token counters without retaining conversation content.
 - Uses a fixed, activity-anchored five-hour window and a classic 16-weekly-point allowance.
-- Warns at 50%, 75%, 90%, and 100%.
+- Sends a macOS banner and sound at 75%, 50%, 30%, and 0% remaining.
 - Optionally installs a fail-open `UserPromptSubmit` hook that blocks only positively identified Mac-app sessions.
 - Leaves CLI, IDE, browser, cloud, mobile, and other machines unblocked.
 - Stores all state locally in `~/Library/Application Support/QuotaBar`.

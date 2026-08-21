@@ -118,6 +118,53 @@ async fn update_settings(
 }
 
 #[tauri::command]
+async fn complete_onboarding(
+    app: AppHandle,
+    runtime: State<'_, AppRuntime>,
+) -> Result<GateSnapshotV1, String> {
+    {
+        let mut inner = runtime.inner.write().await;
+        inner.engine.settings.onboarding_completed = true;
+        inner.engine.settings.launch_at_login = true;
+    }
+    app.autolaunch()
+        .enable()
+        .map_err(|error| error.to_string())?;
+    runtime.persist().await;
+    Ok(runtime.snapshot().await)
+}
+
+#[tauri::command]
+fn send_test_notification(app: AppHandle) -> Result<(), String> {
+    app.notification()
+        .request_permission()
+        .map_err(|error| error.to_string())?;
+    app.notification()
+        .builder()
+        .title("QuotaBar alerts are on")
+        .body("You will hear this sound and see a macOS notification at 75%, 50%, 30%, and 0% remaining.")
+        .sound("default")
+        .show()
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn open_applications_folder() -> Result<(), String> {
+    std::process::Command::new("open")
+        .arg("/Applications")
+        .spawn()
+        .map(|_| ())
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn is_in_applications() -> bool {
+    std::env::current_exe()
+        .map(|path| path.starts_with("/Applications"))
+        .unwrap_or(false)
+}
+
+#[tauri::command]
 async fn request_override(
     runtime: State<'_, AppRuntime>,
     phrase: String,
@@ -397,10 +444,17 @@ async fn refresh_ui(app: AppHandle, runtime: AppRuntime, quit_item: MenuItem<tau
                 .weekly_remaining_percent
                 .map(|value| format!("{}%", value.round()))
                 .unwrap_or_else(|| "—".to_string());
-            let _ = tray.set_title(Some(format!(
-                "5h {}% · Week {weekly}",
-                snapshot.five_hour_remaining_percent.round()
-            )));
+            let title = if snapshot.state == quota_core::GateState::Unavailable {
+                "QuotaBar —".to_string()
+            } else if snapshot.state == quota_core::GateState::Exhausted {
+                format!("Paused · Wk {weekly} left")
+            } else {
+                format!(
+                    "5h {}% left · Wk {weekly}",
+                    snapshot.five_hour_remaining_percent.round()
+                )
+            };
+            let _ = tray.set_title(Some(title));
         }
         let locked = snapshot.state == quota_core::GateState::Exhausted;
         let _ = quit_item.set_enabled(!locked);
@@ -411,39 +465,55 @@ async fn refresh_ui(app: AppHandle, runtime: AppRuntime, quit_item: MenuItem<tau
 }
 
 async fn maybe_notify(app: &AppHandle, runtime: &AppRuntime, snapshot: &GateSnapshotV1) {
-    let threshold = match snapshot.five_hour_used_percent {
-        value if value >= 100.0 => 100,
-        value if value >= 90.0 => 90,
-        value if value >= 75.0 => 75,
-        value if value >= 50.0 => 50,
-        _ => 0,
-    };
-    let should_notify = {
+    let stage = notification_stage(
+        snapshot.five_hour_remaining_percent,
+        snapshot.window_started_at.is_some(),
+    );
+    let (should_notify, sound_enabled) = {
         let mut inner = runtime.inner.write().await;
-        if threshold > inner.last_notification_threshold
-            && inner.engine.settings.notifications_enabled
+        if stage > inner.last_notification_threshold && inner.engine.settings.notifications_enabled
         {
-            inner.last_notification_threshold = threshold;
-            true
+            inner.last_notification_threshold = stage;
+            (true, inner.engine.settings.notification_sound_enabled)
         } else {
-            if threshold == 0 {
+            if stage == 0 {
                 inner.last_notification_threshold = 0;
             }
-            false
+            (false, false)
         }
     };
     if should_notify {
-        let body = if threshold == 100 {
-            "New prompts in the Codex Mac app are paused until the five-hour reset.".to_string()
-        } else {
-            format!("You have used {threshold}% of the current five-hour allowance.")
+        let (title, body) = match stage {
+            1 => ("75% left", "Your five-hour budget has started moving."),
+            2 => ("50% left", "Half of your five-hour budget remains."),
+            3 => (
+                "30% left",
+                "Slow down if you want this budget to last until reset.",
+            ),
+            _ => (
+                "Five-hour budget used",
+                "New prompts in the Codex Mac app are paused until the reset.",
+            ),
         };
-        let _ = app
-            .notification()
-            .builder()
-            .title("QuotaBar")
-            .body(body)
-            .show();
+        let mut notification = app.notification().builder().title(title).body(body);
+        if sound_enabled {
+            notification = notification.sound("default");
+        }
+        let _ = notification.show();
+    }
+}
+
+fn notification_stage(remaining_percent: f64, window_active: bool) -> u8 {
+    if !window_active || remaining_percent > 75.0 {
+        0
+    } else if remaining_percent <= 0.0 {
+        4
+    } else if remaining_percent <= 30.0 {
+        3
+    } else if remaining_percent <= 50.0 {
+        2
+    } else {
+        1
     }
 }
 
@@ -451,7 +521,11 @@ fn build_tray(app: &tauri::App) -> tauri::Result<MenuItem<tauri::Wry>> {
     let open = MenuItem::with_id(app, "open", "Open QuotaBar", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit QuotaBar", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&open, &quit])?;
-    TrayIconBuilder::with_id("main")
+    let mut builder = TrayIconBuilder::with_id("main");
+    if let Some(icon) = app.default_window_icon() {
+        builder = builder.icon(icon.clone()).icon_as_template(true);
+    }
+    builder
         .title("5h — · Week —")
         .tooltip("QuotaBar")
         .menu(&menu)
@@ -537,13 +611,8 @@ pub fn run() {
             };
             app.manage(runtime.clone());
             let quit_item = build_tray(app)?;
-            if runtime
-                .inner
-                .blocking_read()
-                .engine
-                .settings
-                .launch_at_login
-            {
+            let settings = runtime.inner.blocking_read().engine.settings.clone();
+            if settings.launch_at_login {
                 let _ = app.handle().autolaunch().enable();
             }
             if let Some(window) = app.get_webview_window("main") {
@@ -558,6 +627,9 @@ pub fn run() {
                     }
                     _ => {}
                 });
+                if !settings.onboarding_completed {
+                    show_main_window(app.handle());
+                }
             }
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(serve_gate_socket(runtime.clone()));
@@ -569,6 +641,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_state,
             update_settings,
+            complete_onboarding,
+            send_test_notification,
+            open_applications_folder,
+            is_in_applications,
             request_override,
             install_desktop_hook,
             repair_desktop_hook,
@@ -580,4 +656,19 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running QuotaBar");
+}
+
+#[cfg(test)]
+mod notification_tests {
+    use super::notification_stage;
+
+    #[test]
+    fn warning_stages_are_based_on_remaining_budget() {
+        assert_eq!(notification_stage(100.0, true), 0);
+        assert_eq!(notification_stage(75.0, true), 1);
+        assert_eq!(notification_stage(50.0, true), 2);
+        assert_eq!(notification_stage(30.0, true), 3);
+        assert_eq!(notification_stage(0.0, true), 4);
+        assert_eq!(notification_stage(0.0, false), 0);
+    }
 }

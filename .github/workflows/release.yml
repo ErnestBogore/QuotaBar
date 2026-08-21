@@ -12,7 +12,7 @@ on:
         description: Release version without the leading v
         required: true
         type: string
-        default: 0.3.1
+        default: 0.4.0
 
 permissions:
   contents: write
@@ -42,6 +42,7 @@ jobs:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
       - run: pnpm install --frozen-lockfile
+      - run: ./scripts/prepare-hook.sh
       - run: pnpm check && pnpm test && cargo test --workspace
       - run: ./scripts/prepare-universal-hook.sh
       - run: pnpm tauri build --target universal-apple-darwin --bundles app
@@ -62,9 +63,12 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent "$app" "$bundle_dir/QuotaBar-notarization.zip"
           xcrun notarytool submit "$bundle_dir/QuotaBar-notarization.zip" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
           xcrun stapler staple "$app"
-          ditto -c -k --sequesterRsrc --keepParent "$app" "$bundle_dir/QuotaBar.app.zip"
+          ditto -c -k --sequesterRsrc --keepParent "$app" "$bundle_dir/QuotaBar-macOS.zip"
           tar -czf "$bundle_dir/QuotaBar.app.tar.gz" -C "$bundle_dir" QuotaBar.app
-          hdiutil create -volname QuotaBar -srcfolder "$app" -ov -format UDZO "$bundle_dir/QuotaBar.dmg"
+          installer_dir="$(mktemp -d)"
+          ditto "$app" "$installer_dir/QuotaBar.app"
+          brew install create-dmg
+          create-dmg --volname "QuotaBar" --window-size 660 400 --icon-size 112 --icon "QuotaBar.app" 180 195 --hide-extension "QuotaBar.app" --app-drop-link 480 195 --no-internet-enable --overwrite "$bundle_dir/QuotaBar.dmg" "$installer_dir"
           xcrun notarytool submit "$bundle_dir/QuotaBar.dmg" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
           xcrun stapler staple "$bundle_dir/QuotaBar.dmg"
           rm "$bundle_dir/QuotaBar-notarization.zip"
@@ -81,7 +85,7 @@ jobs:
           const platform = { signature: process.env.SIGNATURE, url: process.env.RELEASE_URL };
           writeFileSync('target/latest.json', JSON.stringify({
             version: process.env.VERSION,
-            notes: 'See the GitHub release notes.',
+            notes: 'Reliable usage alerts, guided first-run setup, automatic update checks, clearer menu-bar status, and an in-app What’s New panel.',
             pub_date: new Date().toISOString(),
             platforms: { 'darwin-aarch64': platform, 'darwin-x86_64': platform }
           }, null, 2));
@@ -92,7 +96,7 @@ jobs:
           draft: true
           generate_release_notes: true
           files: |
-            target/universal-apple-darwin/release/bundle/macos/QuotaBar.app.zip
+            target/universal-apple-darwin/release/bundle/macos/QuotaBar-macOS.zip
             target/universal-apple-darwin/release/bundle/macos/QuotaBar.app.tar.gz
             target/universal-apple-darwin/release/bundle/macos/QuotaBar.app.tar.gz.sig
             target/universal-apple-darwin/release/bundle/macos/QuotaBar.dmg

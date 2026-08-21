@@ -1,0 +1,63 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "QuotaBar",
+  "version": "0.3.1",
+  "identifier": "app.quotabar.mac",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../build"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "QuotaBar",
+        "width": 380,
+        "height": 570,
+        "minWidth": 380,
+        "minHeight": 570,
+        "maxWidth": 380,
+        "maxHeight": 570,
+        "resizable": false,
+        "visible": false,
+        "fullscreen": false,
+        "decorations": false,
+        "transparent": true,
+        "shadow": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: http://asset.localhost; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg"],
+    "category": "Utility",
+    "shortDescription": "A local five-hour usage gate for the Codex Mac app",
+    "longDescription": "QuotaBar reconstructs a five-hour Codex budget from account-wide weekly usage and gates only new prompts in the local Mac app.",
+    "copyright": "Copyright © 2026 QuotaBar contributors",
+    "icon": ["icons/icon.icns", "icons/icon.png"],
+    "externalBin": ["binaries/quotabar-hook"],
+    "macOS": {
+      "minimumSystemVersion": "14.0",
+      "hardenedRuntime": true,
+      "entitlements": "Entitlements.plist"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/ErnestBogore/QuotaBar/releases/latest/download/latest.json"
+      ],
+      "dialog": false,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZGNEYwNTI2NUIyRUVEQzMKUldURDdTNWJKZ1ZQL3hmVFpkcDZvNWpTUi9XL0hjNjRRdVJXSmZMWHN4ZHBaenpVR0sxV1puTEQK"
+    }
+  }
+}

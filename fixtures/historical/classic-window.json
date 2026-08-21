@@ -1,0 +1,38 @@
+{
+  "description": "Sanitized synthetic trace; contains quota percentages only.",
+  "snapshots": [
+    {
+      "quotaId": "codex",
+      "observedAt": "2026-08-21T09:00:00Z",
+      "primary": {
+        "usedPercent": 25.0,
+        "windowMinutes": 10080,
+        "resetsAt": "2026-08-24T00:00:00Z"
+      },
+      "secondary": null
+    },
+    {
+      "quotaId": "codex",
+      "observedAt": "2026-08-21T10:00:00Z",
+      "primary": {
+        "usedPercent": 29.0,
+        "windowMinutes": 10080,
+        "resetsAt": "2026-08-24T00:00:00Z"
+      },
+      "secondary": null
+    },
+    {
+      "quotaId": "codex",
+      "observedAt": "2026-08-21T12:00:00Z",
+      "primary": {
+        "usedPercent": 35.0,
+        "windowMinutes": 10080,
+        "resetsAt": "2026-08-24T00:00:00Z"
+      },
+      "secondary": null
+    }
+  ],
+  "expectedWindowStart": "2026-08-21T10:00:00Z",
+  "expectedWindowEnd": "2026-08-21T15:00:00Z",
+  "expectedUsedPercent": 62.5
+}

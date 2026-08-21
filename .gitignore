@@ -1,0 +1,13 @@
+.DS_Store
+.svelte-kit/
+build/
+node_modules/
+target/
+src-tauri/target/
+src-tauri/gen/
+*.log
+*.sqlite3
+.env
+work/
+outputs/
+src-tauri/binaries/quotabar-hook-*

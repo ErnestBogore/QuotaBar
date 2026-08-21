@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      acceptance_confirmed:
+        description: Account metering and desktop-only classification passed acceptance testing
+        required: true
+        type: boolean
+        default: false
+      release_version:
+        description: Release version without the leading v
+        required: true
+        type: string
+        default: 0.3.1
+
+permissions:
+  contents: write
+
+jobs:
+  universal-macos:
+    if: inputs.acceptance_confirmed
+    runs-on: macos-14
+    env:
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: apple-actions/import-codesign-certs@v3
+        with:
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check && pnpm test && cargo test --workspace
+      - run: ./scripts/prepare-universal-hook.sh
+      - run: pnpm tauri build --target universal-apple-darwin --bundles app
+      - name: Sign nested hook and app
+        run: |
+          app="target/universal-apple-darwin/release/bundle/macos/QuotaBar.app"
+          codesign --force --options runtime --timestamp --identifier app.quotabar.hook --sign "$APPLE_SIGNING_IDENTITY" "$app/Contents/MacOS/quotabar-hook"
+          codesign --force --options runtime --timestamp --entitlements src-tauri/Entitlements.plist --identifier app.quotabar.mac --sign "$APPLE_SIGNING_IDENTITY" "$app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+      - name: Notarize and package
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          bundle_dir="target/universal-apple-darwin/release/bundle/macos"
+          app="$bundle_dir/QuotaBar.app"
+          ditto -c -k --sequesterRsrc --keepParent "$app" "$bundle_dir/QuotaBar-notarization.zip"
+          xcrun notarytool submit "$bundle_dir/QuotaBar-notarization.zip" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+          xcrun stapler staple "$app"
+          ditto -c -k --sequesterRsrc --keepParent "$app" "$bundle_dir/QuotaBar.app.zip"
+          tar -czf "$bundle_dir/QuotaBar.app.tar.gz" -C "$bundle_dir" QuotaBar.app
+          hdiutil create -volname QuotaBar -srcfolder "$app" -ov -format UDZO "$bundle_dir/QuotaBar.dmg"
+          xcrun notarytool submit "$bundle_dir/QuotaBar.dmg" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+          xcrun stapler staple "$bundle_dir/QuotaBar.dmg"
+          rm "$bundle_dir/QuotaBar-notarization.zip"
+      - name: Sign updater and write metadata
+        run: |
+          bundle_dir="target/universal-apple-darwin/release/bundle/macos"
+          pnpm tauri signer sign "$bundle_dir/QuotaBar.app.tar.gz"
+          VERSION="${{ inputs.release_version }}"
+          export VERSION
+          export RELEASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}/QuotaBar.app.tar.gz"
+          export SIGNATURE="$(cat "$bundle_dir/QuotaBar.app.tar.gz.sig")"
+          node --input-type=module <<'NODE'
+          import { writeFileSync } from 'node:fs';
+          const platform = { signature: process.env.SIGNATURE, url: process.env.RELEASE_URL };
+          writeFileSync('target/latest.json', JSON.stringify({
+            version: process.env.VERSION,
+            notes: 'See the GitHub release notes.',
+            pub_date: new Date().toISOString(),
+            platforms: { 'darwin-aarch64': platform, 'darwin-x86_64': platform }
+          }, null, 2));
+          NODE
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.release_version }}
+          draft: true
+          generate_release_notes: true
+          files: |
+            target/universal-apple-darwin/release/bundle/macos/QuotaBar.app.zip
+            target/universal-apple-darwin/release/bundle/macos/QuotaBar.app.tar.gz
+            target/universal-apple-darwin/release/bundle/macos/QuotaBar.app.tar.gz.sig
+            target/universal-apple-darwin/release/bundle/macos/QuotaBar.dmg
+            target/latest.json

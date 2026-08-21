@@ -1,0 +1,29 @@
+[package]
+name = "quotabar"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "quotabar_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+chrono.workspace = true
+dirs.workspace = true
+quota-core = { path = "../crates/quota-core" }
+rusqlite = { version = "0.37", features = ["bundled"] }
+serde.workspace = true
+serde_json.workspace = true
+tauri = { version = "2", features = ["tray-icon", "macos-private-api"] }
+tauri-plugin-autostart = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-positioner = { version = "2", features = ["tray-icon"] }
+tauri-plugin-updater = "2"
+thiserror.workspace = true
+tokio = { version = "1", features = ["io-util", "macros", "net", "process", "rt-multi-thread", "sync", "time"] }
+walkdir = "2"
+

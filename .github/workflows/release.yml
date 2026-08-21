@@ -71,7 +71,7 @@ jobs:
       - name: Sign updater and write metadata
         run: |
           bundle_dir="target/universal-apple-darwin/release/bundle/macos"
-          pnpm tauri signer sign "$bundle_dir/QuotaBar.app.tar.gz"
+          pnpm tauri signer sign --password "${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}" "$bundle_dir/QuotaBar.app.tar.gz"
           VERSION="${{ inputs.release_version }}"
           export VERSION
           export RELEASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}/QuotaBar.app.tar.gz"

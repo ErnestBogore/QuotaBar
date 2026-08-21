@@ -1,5 +1,7 @@
 import Image from "next/image";
 
+export const dynamic = "force-dynamic";
+
 export default function Home() {
   return (
     <main>
@@ -25,6 +27,7 @@ export default function Home() {
             <a
               className="button primary"
               href="https://github.com/ErnestBogore/QuotaBar/releases/latest/download/QuotaBar.dmg"
+              data-site-version="9"
             >
               Download for Mac
             </a>

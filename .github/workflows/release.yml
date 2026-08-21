@@ -67,8 +67,8 @@ jobs:
           tar -czf "$bundle_dir/QuotaBar.app.tar.gz" -C "$bundle_dir" QuotaBar.app
           installer_dir="$(mktemp -d)"
           ditto "$app" "$installer_dir/QuotaBar.app"
-          brew install create-dmg
-          create-dmg --volname "QuotaBar" --window-size 660 400 --icon-size 112 --icon "QuotaBar.app" 180 195 --hide-extension "QuotaBar.app" --app-drop-link 480 195 --no-internet-enable --overwrite "$bundle_dir/QuotaBar.dmg" "$installer_dir"
+          ln -s /Applications "$installer_dir/Applications"
+          hdiutil create -volname QuotaBar -srcfolder "$installer_dir" -ov -format UDZO "$bundle_dir/QuotaBar.dmg"
           xcrun notarytool submit "$bundle_dir/QuotaBar.dmg" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
           xcrun stapler staple "$bundle_dir/QuotaBar.dmg"
           rm "$bundle_dir/QuotaBar-notarization.zip"

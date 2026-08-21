@@ -65,10 +65,7 @@ jobs:
           xcrun stapler staple "$app"
           ditto -c -k --sequesterRsrc --keepParent "$app" "$bundle_dir/QuotaBar-macOS.zip"
           tar -czf "$bundle_dir/QuotaBar.app.tar.gz" -C "$bundle_dir" QuotaBar.app
-          installer_dir="$(mktemp -d)"
-          ditto "$app" "$installer_dir/QuotaBar.app"
-          ln -s /Applications "$installer_dir/Applications"
-          hdiutil create -volname QuotaBar -srcfolder "$installer_dir" -ov -format UDZO "$bundle_dir/QuotaBar.dmg"
+          ./scripts/create-dmg.sh "$app" "$bundle_dir/QuotaBar.dmg"
           xcrun notarytool submit "$bundle_dir/QuotaBar.dmg" --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
           xcrun stapler staple "$bundle_dir/QuotaBar.dmg"
           rm "$bundle_dir/QuotaBar-notarization.zip"

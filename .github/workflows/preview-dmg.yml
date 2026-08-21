@@ -22,22 +22,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: ./scripts/prepare-hook.sh release
       - run: pnpm check && pnpm test && cargo test --workspace
-      - run: pnpm tauri build --bundles dmg
+      - run: pnpm tauri build --bundles app
       - name: Build the drag-to-Applications installer
         run: |
-          bundle_dir="target/release/bundle/dmg"
-          source_dmg="$bundle_dir/QuotaBar_0.4.0_aarch64.dmg"
-          writable_dmg="$bundle_dir/QuotaBar-writable.dmg"
-          hdiutil convert "$source_dmg" -format UDRW -o "$writable_dmg"
-          attach_output="$(hdiutil attach -readwrite -noverify -noautoopen -nobrowse "$writable_dmg")"
-          device="$(printf '%s\n' "$attach_output" | awk '/Apple_APFS|Apple_HFS/ {print $1; exit}')"
-          mount_point="$(printf '%s\n' "$attach_output" | sed -n 's|^.*\(/Volumes/.*\)$|\1|p' | tail -1)"
-          app="$mount_point/QuotaBar.app"
+          app="target/release/bundle/macos/QuotaBar.app"
           codesign --force --sign - --identifier app.quotabar.hook "$app/Contents/MacOS/quotabar-hook"
           codesign --force --deep --sign - --identifier app.quotabar.mac "$app"
           codesign --verify --deep --strict --verbose=2 "$app"
-          hdiutil detach "$device"
-          hdiutil convert "$writable_dmg" -format UDZO -o "$bundle_dir/QuotaBar.dmg"
+          ./scripts/create-dmg.sh "$app" "target/release/bundle/dmg/QuotaBar.dmg"
       - uses: actions/upload-artifact@v4
         with:
           name: QuotaBar-dmg

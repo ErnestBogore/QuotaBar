@@ -30,8 +30,6 @@ export default function Home() {
         </div>
 
         <div className="product-stage" aria-label="QuotaBar app preview">
-          <div className="glow" />
-          <div className="demo-label"><i /> Five-hour window</div>
           <div className="app-card">
             <div className="app-head">
               <span><Image src="/icon.png" width={25} height={25} alt="" />QuotaBar</span>
@@ -56,18 +54,6 @@ export default function Home() {
             </div>
             <div className="week-meter"><i className="demo-week-fill" /></div>
             <div className="app-foot"><span>Weekly meter keeps tracking</span><span className="gate-state"><i /><b className="gate-ready">Mac prompts ready</b><b className="gate-warning">Warning</b><b className="gate-paused">Mac prompts paused</b></span></div>
-          </div>
-
-          <div className="prompt-demo" aria-label="A new Codex prompt is paused when the limit is reached">
-            <span className="prompt-kicker">New Codex prompt</span>
-            <p>“Make one more change to the app.”</p>
-            <div className="prompt-result">
-              <i />
-              <div>
-                <strong><span className="prompt-ready">Ready to send</span><span className="prompt-paused">Paused by QuotaBar</span></strong>
-                <small><span className="prompt-ready">Budget available</span><span className="prompt-paused">Try again after reset</span></small>
-              </div>
-            </div>
           </div>
         </div>
       </section>

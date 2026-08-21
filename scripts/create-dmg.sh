@@ -53,20 +53,17 @@ osascript <<'APPLESCRIPT'
 tell application "Finder"
   tell disk "QuotaBar"
     open
-    tell container window
-      set current view to icon view
-      set toolbar visible to false
-      set statusbar visible to false
-      set bounds to {100, 100, 760, 500}
-      tell icon view options
-        set arrangement to not arranged
-        set icon size to 96
-        set text size to 13
-        set background picture to file ".background:dmg-background.png"
-      end tell
-      set position of item "QuotaBar.app" to {180, 220}
-      set position of item "Applications" to {480, 220}
-    end tell
+    set current view of container window to icon view
+    set toolbar visible of container window to false
+    set statusbar visible of container window to false
+    set bounds of container window to {100, 100, 760, 500}
+    set theViewOptions to icon view options of container window
+    set arrangement of theViewOptions to not arranged
+    set icon size of theViewOptions to 96
+    set text size of theViewOptions to 13
+    set background picture of theViewOptions to file ".background:dmg-background.png"
+    set position of item "QuotaBar.app" of container window to {180, 220}
+    set position of item "Applications" of container window to {480, 220}
     update without registering applications
     delay 2
     close
@@ -78,4 +75,3 @@ sync
 hdiutil detach "$device" -quiet
 device=""
 hdiutil convert "$writable_dmg" -format UDZO -ov -o "$output_path" >/dev/null
-
